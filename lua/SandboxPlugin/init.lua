@@ -1,19 +1,25 @@
 local M = {}
 
-local function my_print()
-	local win = vim.api.nvim_get_current_win()
-	local width = math.floor(vim.api.nvim_win_get_width(win) / 2)
-	local height = math.floor(vim.api.nvim_win_get_height(win))
-	local help_buffer = vim.api.nvim_create_buf(false, true)
-	local new_buffer = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_open_win(help_buffer, false,
-		{ relative = 'win', width = width, height = 20, bufpos = { 0, 0 }, border = 'single' })
-	vim.api.nvim_open_win(new_buffer, true,
-		{ relative = 'win', width = width, height = height - 21, bufpos = { 20, 0 }, border = 'single' })
+local client = vim.lsp.start_client({
+	name = "my-lsp",
+	cmd = { "my-lsp" },
+})
+
+if not client then
+	vim.notify("Failed to start my-lsp", vim.log.levels.ERROR)
+	return
 end
 
+
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = "markdown",
+	callback = function()
+		vim.lsp.buf_attach_client(0, client)
+	end
+})
+
 function M.setup(config)
-	vim.api.nvim_create_user_command("MyPrint", my_print, {})
+	print("Setting up my-lsp", config)
 end
 
 return M
