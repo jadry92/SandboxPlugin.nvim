@@ -1,8 +1,15 @@
 local M = {}
 
+local function MyLSP()
+	print("MyLSP")
+end
+vim.api.nvim_create_user_command("MyLSP", MyLSP, { force = true })
+
+local base_path = os.getenv("PROJECTS_DIR")
+
 local client = vim.lsp.start_client({
-	name = "my-lsp",
-	cmd = { "my-lsp" },
+	name = "myLSP",
+	cmd = { base_path .. "/SandboxPlugin.nvim/MyLSP/exe/main" },
 })
 
 if not client then
@@ -14,12 +21,16 @@ end
 vim.api.nvim_create_autocmd("FileType", {
 	pattern = "markdown",
 	callback = function()
-		vim.lsp.buf_attach_client(0, client)
-	end
+		local status = vim.lsp.buf_attach_client(0, client)
+		if not status then
+			vim.notify("Failed to attach my-lsp to buffer", vim.log.levels.ERROR)
+		end
+		print("Attached my-lsp to buffer")
+	end,
 })
 
 function M.setup(config)
-	print("Setting up my-lsp", config)
+	print("Setting up my-lsp")
 end
 
 return M
