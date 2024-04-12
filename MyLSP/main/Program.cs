@@ -1,7 +1,6 @@
 
-using System;
-using System.IO;
 using System.Text;
+using System.Text.Json;
 
 namespace Main;
 
@@ -25,6 +24,28 @@ public class Program
             }
         }
     }
+    public class Message
+    {
+        public string EncodeMessage(string message)
+        {
+            return message;
+        }
+        public string DecodeMessage(Stream stream)
+        {
+            byte[] buffer = new byte[1024];
+            int bytesRead = stream.Read(buffer, 0, buffer.Length);
+            string chunk = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+            string[] arrayHeader = chunk.Split("\r\n\r\n");
+            string header = arrayHeader[0];
+            string contentFirstChunk = arrayHeader[1];
+            int contentLength = int.Parse(header.Split("Content-Length: ")[1]) - contentFirstChunk.Length;
+            byte[] contentBuffer = new byte[contentLength];
+            stream.Read(contentBuffer, 0, contentLength);
+            string content = Encoding.ASCII.GetString(contentBuffer);
+            content = contentFirstChunk + content;
+            return content;
+        }
+    }
     public static void Main()
     {
         string? basePath = Environment.GetEnvironmentVariable("PROJECTS_DIR");
@@ -35,19 +56,30 @@ public class Program
 
         Logger logger = new Logger($"{basePath}/SandboxPlugin.nvim/log.txt");
         logger.Log("the program has started");
+        Message message = new Message();
         using (Stream stdin = Console.OpenStandardInput())
         {
-            byte[] buffer = new byte[10];
-            int bytes;
-            StringBuilder builder = new StringBuilder();
-            while ((bytes = stdin.Read(buffer, 0, buffer.Length)) > 0)
+            while (true)
             {
-                builder.Append(Encoding.ASCII.GetString(buffer, 0, bytes));
+                string requestStr = message.DecodeMessage(stdin);
+                try
+                {
+                    logger.Log(requestStr);
+                    Request request = JsonSerializer.Deserialize<Request>(requestStr);
+                    logger.Log(request.method);
+                }
+                catch (Exception e)
+                {
+                    logger.Log(e.Message);
+                }
             }
 
-            string result = builder.ToString();
-            logger.Log(result);
         }
 
+    }
+    class Request
+    {
+        public string method { get; set; }
+        public int id { get; set; }
     }
 }
