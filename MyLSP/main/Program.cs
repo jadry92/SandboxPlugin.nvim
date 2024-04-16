@@ -1,51 +1,12 @@
 
 using System.Text;
 using System.Text.Json;
+using InitializeLSP;
 
 namespace Main;
 
 public class Program
 {
-
-    public class Logger
-    {
-        private string filePath;
-
-        public Logger(string filePath)
-        {
-            this.filePath = filePath;
-        }
-
-        public void Log(string message)
-        {
-            using (StreamWriter streamWriter = new StreamWriter(this.filePath, false))
-            {
-                streamWriter.WriteLine($"{DateTime.Now}: {message}");
-            }
-        }
-    }
-    public class Message
-    {
-        public string EncodeMessage(string message)
-        {
-            return message;
-        }
-        public string DecodeMessage(Stream stream)
-        {
-            byte[] buffer = new byte[1024];
-            int bytesRead = stream.Read(buffer, 0, buffer.Length);
-            string chunk = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-            string[] arrayHeader = chunk.Split("\r\n\r\n");
-            string header = arrayHeader[0];
-            string contentFirstChunk = arrayHeader[1];
-            int contentLength = int.Parse(header.Split("Content-Length: ")[1]) - contentFirstChunk.Length;
-            byte[] contentBuffer = new byte[contentLength];
-            stream.Read(contentBuffer, 0, contentLength);
-            string content = Encoding.ASCII.GetString(contentBuffer);
-            content = contentFirstChunk + content;
-            return content;
-        }
-    }
     public static void Main()
     {
         string? basePath = Environment.GetEnvironmentVariable("PROJECTS_DIR");
@@ -64,9 +25,9 @@ public class Program
                 string requestStr = message.DecodeMessage(stdin);
                 try
                 {
-                    logger.Log(requestStr);
-                    Request request = JsonSerializer.Deserialize<Request>(requestStr);
+                    Request? request = JsonSerializer.Deserialize<InitializeRequest>(requestStr);
                     logger.Log(request.method);
+                    HandelRequest(request, logger, message);
                 }
                 catch (Exception e)
                 {
@@ -77,9 +38,58 @@ public class Program
         }
 
     }
-    class Request
+
+    public static void HandelRequest(Request request, Logger logger, Message message)
     {
-        public string method { get; set; }
-        public int id { get; set; }
+        if (request.method == "initialize")
+        {
+            int id = request.id ?? 0;
+            var response = Parser.ParseInitializeRequest(id);
+            string responseStr = JsonSerializer.Serialize(response);
+            byte[] buffer = message.EncodeMessage(responseStr);
+            Console.OpenStandardOutput().Write(buffer, 0, buffer.Length);
+            logger.Log("initialize request has been handled");
+        }
+    }
+}
+public class Message
+{
+    public byte[] EncodeMessage(string message)
+    {
+        string content = $"Content-Length: {message.Length}\r\n\r\n{message}";
+        byte[] buffer = Encoding.ASCII.GetBytes(content);
+        return buffer;
+    }
+    public string DecodeMessage(Stream stream)
+    {
+        byte[] buffer = new byte[1024];
+        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+        string chunk = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+        string[] arrayHeader = chunk.Split("\r\n\r\n");
+        string header = arrayHeader[0];
+        string contentFirstChunk = arrayHeader[1];
+        int contentLength = int.Parse(header.Split("Content-Length: ")[1]) - contentFirstChunk.Length;
+        byte[] contentBuffer = new byte[contentLength];
+        stream.Read(contentBuffer, 0, contentLength);
+        string content = Encoding.ASCII.GetString(contentBuffer);
+        content = contentFirstChunk + content;
+        return content;
+    }
+}
+public class Logger
+{
+    private string filePath;
+
+    public Logger(string filePath)
+    {
+        this.filePath = filePath;
+    }
+
+    public void Log(string message)
+    {
+        using (StreamWriter streamWriter = new StreamWriter(this.filePath, false))
+        {
+            streamWriter.WriteLine($"{DateTime.Now}: {message}");
+        }
     }
 }
