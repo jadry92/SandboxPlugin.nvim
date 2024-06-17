@@ -1,15 +1,10 @@
 local M = {}
 
-local function MyLSP()
-	print("MyLSP")
-end
-vim.api.nvim_create_user_command("MyLSP", MyLSP, { force = true })
-
 local base_path = os.getenv("PROJECTS_DIR")
 
 local client = vim.lsp.start_client({
 	name = "myLSP",
-	cmd = { base_path .. "/SandboxPlugin.nvim/MyLSP/exe/main" },
+	cmd = { base_path .. "/SandboxPlugin.nvim/MarkdownLSP/exe/LSP" },
 })
 
 if not client then
