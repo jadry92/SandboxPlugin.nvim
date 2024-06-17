@@ -1,25 +1,12 @@
-﻿using System.Text.Json;
-
-namespace TrieDictionary;
+﻿namespace TrieDictionary;
 
 public class Trie
 {
     public TrieNode root;
-    private const string FILE_NAME = "data/dictionary_compact.json";
 
     public Trie()
     {
         this.root = new TrieNode('.');
-        string filePath = Path.GetFullPath(FILE_NAME);
-        if (File.Exists(filePath))
-        {
-            string text = File.ReadAllText(filePath);
-            var dic = JsonSerializer.Deserialize<Dictionary<string, string>>(text);
-        }
-        else
-        {
-            throw new Exception($"File: {filePath} not fount");
-        }
     }
 
     public void add(string word)

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using InitializeLSP;
 using Serilog;
+using TrieDictionary;
 
 
 namespace Main;
@@ -18,10 +19,19 @@ public class Program
         }
 
         string _filePath = $"{basePath}/MarkdownLSP/log.txt";
-
         Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.File(_filePath).CreateLogger();
+        Log.Debug("the program has started");
 
-        Log.Information("the program has started");
+        try
+        {
+            var literalDictionary = new LiteralDictionary();
+        }
+        catch (Exception e)
+        {
+            Log.Error(e.Message);
+        }
+
+
         Message message = new Message();
         using (Stream stdin = Console.OpenStandardInput())
         {
@@ -34,7 +44,7 @@ public class Program
                     request = JsonSerializer.Deserialize<InitializeRequest>(requestStr);
                     if (request != null && request.method != null)
                     {
-                        Log.Information(request.method);
+                        Log.Debug(request.method);
                         HandelRequest(request, message);
                     }
                 }
@@ -55,7 +65,7 @@ public class Program
             string responseStr = JsonSerializer.Serialize(response);
             byte[] buffer = message.EncodeMessage(responseStr);
             Console.OpenStandardOutput().Write(buffer, 0, buffer.Length);
-            Log.Information("initialize request has been handled");
+            Log.Debug("initialize request has been handled");
         }
     }
 }
