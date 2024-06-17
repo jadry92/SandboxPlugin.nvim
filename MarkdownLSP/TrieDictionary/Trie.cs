@@ -1,4 +1,6 @@
-﻿namespace TrieDictionary;
+﻿using System.Text.Json;
+
+namespace TrieDictionary;
 
 public class Trie
 {
@@ -8,6 +10,16 @@ public class Trie
     public Trie()
     {
         this.root = new TrieNode('.');
+        string filePath = Path.GetFullPath(FILE_NAME);
+        if (File.Exists(filePath))
+        {
+            string text = File.ReadAllText(filePath);
+            var dic = JsonSerializer.Deserialize<Dictionary<string, string>>(text);
+        }
+        else
+        {
+            throw new Exception($"File: {filePath} not fount");
+        }
     }
 
     public void add(string word)
@@ -55,7 +67,7 @@ public class Trie
 
     private void addWord(string word, TrieNode node)
     {
-        if (word.Equals(string.Empty))
+        if (string.IsNullOrEmpty(word))
         {
             node.isWordEnd = true;
         }

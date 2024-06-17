@@ -3,8 +3,8 @@ local M = {}
 local base_path = os.getenv("PROJECTS_DIR")
 
 local client = vim.lsp.start_client({
-	name = "myLSP",
-	cmd = { base_path .. "/SandboxPlugin.nvim/MarkdownLSP/exe/LSP" },
+	name = "MarkdownLSP",
+	cmd = { base_path .. "/MarkdownLSP/exe/LSP" },
 })
 
 if not client then

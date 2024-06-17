@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MarkdownLSP", "MarkdownLSP", "{411278C9-0883-4FBE-B767-DD07E926C4F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LSP", "MarkdownLSP\LSP\LSP.csproj", "{319A0F55-E009-468D-ACBD-9030D2F7F1F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrieDictionary", "MarkdownLSP\TrieDictionary\TrieDictionary.csproj", "{66C7756E-D179-4C3D-A3C4-4CCEC50898B4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{319A0F55-E009-468D-ACBD-9030D2F7F1F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{319A0F55-E009-468D-ACBD-9030D2F7F1F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{319A0F55-E009-468D-ACBD-9030D2F7F1F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{319A0F55-E009-468D-ACBD-9030D2F7F1F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66C7756E-D179-4C3D-A3C4-4CCEC50898B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66C7756E-D179-4C3D-A3C4-4CCEC50898B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66C7756E-D179-4C3D-A3C4-4CCEC50898B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66C7756E-D179-4C3D-A3C4-4CCEC50898B4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{319A0F55-E009-468D-ACBD-9030D2F7F1F9} = {411278C9-0883-4FBE-B767-DD07E926C4F7}
+		{66C7756E-D179-4C3D-A3C4-4CCEC50898B4} = {411278C9-0883-4FBE-B767-DD07E926C4F7}
+	EndGlobalSection
+EndGlobal

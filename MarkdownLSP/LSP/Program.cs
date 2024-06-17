@@ -17,7 +17,7 @@ public class Program
             throw new Exception("PROJECTS_DIR environment variable is not set");
         }
 
-        string _filePath = $"{basePath}/SandboxPlugin.nvim/log.txt";
+        string _filePath = $"{basePath}/MarkdownLSP/log.txt";
 
         Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.File(_filePath).CreateLogger();
 
