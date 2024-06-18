@@ -12,6 +12,14 @@ public class Program
 {
     public static void Main()
     {
+        bool keepRunning = true;
+
+        Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = true;
+            keepRunning = false;
+        };
+
         string? basePath = Environment.GetEnvironmentVariable("PROJECTS_DIR");
         if (basePath == null)
         {
@@ -19,8 +27,14 @@ public class Program
         }
 
         string _filePath = $"{basePath}/MarkdownLSP/log.txt";
-        Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.File(_filePath).CreateLogger();
-        Log.Debug("the program has started");
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(_filePath)
+            .CreateLogger();
+
+
+
+        Log.Debug("The program has started");
 
         try
         {
@@ -36,16 +50,20 @@ public class Program
         using (Stream stdin = Console.OpenStandardInput())
         {
             Request? request;
-            while (true)
+            while (keepRunning)
             {
-                string requestStr = message.DecodeMessage(stdin);
                 try
                 {
-                    request = JsonSerializer.Deserialize<InitializeRequest>(requestStr);
-                    if (request != null && request.method != null)
+                    string requestStr = message.DecodeMessage(stdin);
+                    if (!string.IsNullOrEmpty(requestStr))
                     {
-                        Log.Debug(request.method);
-                        HandelRequest(request, message);
+                        Log.Debug(requestStr);
+                        request = JsonSerializer.Deserialize<InitializeRequest>(requestStr);
+                        if (request != null && request.method != null)
+                        {
+                            Log.Debug(request.method);
+                            HandelRequest(request, message);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -67,6 +85,11 @@ public class Program
             Console.OpenStandardOutput().Write(buffer, 0, buffer.Length);
             Log.Debug("initialize request has been handled");
         }
+        else if (request.method == "shutdown")
+        {
+            Log.Debug("Closing LSP");
+            Environment.Exit(0);
+        }
     }
 }
 public class Message
@@ -79,17 +102,47 @@ public class Message
     }
     public string DecodeMessage(Stream stream)
     {
-        byte[] buffer = new byte[1024];
+        // Get the header
+        const string headerStr = "Content-Length: ";
+        byte[] buffer = new byte[headerStr.Length];
         int bytesRead = stream.Read(buffer, 0, buffer.Length);
-        string chunk = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-        string[] arrayHeader = chunk.Split("\r\n\r\n");
-        string header = arrayHeader[0];
-        string contentFirstChunk = arrayHeader[1];
-        int contentLength = int.Parse(header.Split("Content-Length: ")[1]) - contentFirstChunk.Length;
+        string headerRead = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+        if (string.IsNullOrEmpty(headerRead))
+        {
+            return "";
+        }
+        if (!headerStr.Equals(headerRead))
+        {
+            throw new Exception($" Wronhg header {headerRead}");
+        }
+
+        var sizeContent = new StringBuilder();
+        byte[] B = new byte[1];
+        while (true)
+        {
+            stream.Read(B, 0, 1);
+            string Bstr = Encoding.ASCII.GetString(B, 0, 1);
+            if (Bstr.Equals("\r"))
+            {
+                byte[] others = new byte[3];
+                stream.Read(others, 0, 3);
+                break;
+            }
+            else
+            {
+                sizeContent.Append(Bstr);
+            }
+        }
+        int contentLength = int.Parse(sizeContent.ToString());
+
+        // string[] arrayHeader = chunk.Split("\r\n\r\n");
+        // string header = arrayHeader[0];
+        // string contentFirstChunk = arrayHeader[1];
+        // int contentLength = int.Parse(header.Split("Content-Length: ")[1]) - contentFirstChunk.Length;
         byte[] contentBuffer = new byte[contentLength];
         stream.Read(contentBuffer, 0, contentLength);
         string content = Encoding.ASCII.GetString(contentBuffer);
-        content = contentFirstChunk + content;
         return content;
     }
 }
