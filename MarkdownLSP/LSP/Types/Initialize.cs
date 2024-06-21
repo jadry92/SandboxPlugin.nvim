@@ -1,19 +1,6 @@
 
-namespace InitializeLSP;
-// Basic LSP Initialize Request and Response
-public class Request
-{
-    public string? method { get; set; }
-    public int? id { get; set; }
-    public string? jsonrpc { get; set; }
-    public string? @params { get; set; }
-}
+namespace LSP.Types;
 
-public class Response
-{
-    public string? jsonrpc { get; set; }
-    public int? id { get; set; }
-}
 
 // Request
 
@@ -80,7 +67,7 @@ class Parser
                     definitionProvider = true,
                     completionProvider = new Dictionary<string, object>() { }
                 },
-                serverInfo = new ServerInfo() { name = "LSP", version = "1.0soasne" }
+                serverInfo = new ServerInfo() { name = "MarkdowbnLSP", version = "1.0-MarkdownLSP" }
             }
         };
         return request;

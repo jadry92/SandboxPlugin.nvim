@@ -32,8 +32,6 @@ public class Program
             .WriteTo.File(_filePath)
             .CreateLogger();
 
-
-
         Log.Debug("The program has started");
 
         try
@@ -46,23 +44,26 @@ public class Program
         }
 
 
-        Message message = new Message();
+        Encoder encoder = new Encoder();
         using (Stream stdin = Console.OpenStandardInput())
         {
             Request? request;
+            string requestStr = "";
             while (keepRunning)
             {
                 try
                 {
-                    string requestStr = message.DecodeMessage(stdin);
+                    requestStr = encoder.DecodeMessage(stdin);
                     if (!string.IsNullOrEmpty(requestStr))
                     {
-                        Log.Debug(requestStr);
-                        request = JsonSerializer.Deserialize<InitializeRequest>(requestStr);
+                        request = JsonSerializer.Deserialize<Request>(requestStr);
                         if (request != null && request.method != null)
                         {
-                            Log.Debug(request.method);
-                            HandelRequest(request, message);
+                            HandelRequest(request, encoder);
+                        }
+                        else
+                        {
+                            Log.Error($"Request Error: {request}");
                         }
                     }
                 }
@@ -74,25 +75,78 @@ public class Program
         }
     }
 
-    public static void HandelRequest(Request request, Message message)
+    public static void HandelRequest(Request request, Encoder encoder)
     {
-        if (request.method == "initialize")
+        switch (request.method)
         {
-            int id = request.id ?? 0;
-            var response = Parser.ParseInitializeRequest(id);
-            string responseStr = JsonSerializer.Serialize(response);
-            byte[] buffer = message.EncodeMessage(responseStr);
-            Console.OpenStandardOutput().Write(buffer, 0, buffer.Length);
-            Log.Debug("initialize request has been handled");
-        }
-        else if (request.method == "shutdown")
-        {
-            Log.Debug("Closing LSP");
-            Environment.Exit(0);
+            case "initialize":
+                int id = request.id ?? 0;
+                var response = Parser.ParseInitializeRequest(id);
+                string responseStr = JsonSerializer.Serialize(response);
+                byte[] buffer = encoder.EncodeMessage(responseStr);
+                Console.OpenStandardOutput().Write(buffer, 0, buffer.Length);
+
+                Log.Debug("initialize request has been handled");
+
+                break;
+            case "textDocument/didOpen":
+
+
+                Log.Debug("To be implemented Open");
+
+                break;
+            case "textDocument/didChange":
+                Log.Debug("To be implemented Change");
+
+                break;
+            case "textDocument/completion":
+                Log.Debug("To be implemented Competition");
+
+                break;
+            case "textDocument/codeAction":
+                Log.Debug("To be implemented code Action");
+
+                break;
+            case "textDocument/definition":
+                Log.Debug("To be implemented definition");
+
+                break;
+            case "textDocument/hover":
+                Log.Debug("To be implemented hover");
+
+                break;
+
+            case "shutdown":
+
+                Log.Debug("Closing LSP");
+                Environment.Exit(0);
+                break;
+
+            default:
+                break;
         }
     }
 }
-public class Message
+
+public class Parcer : wq<T>
+{
+    private Encoder encoder;
+
+    public Comunication()
+    {
+        encoder = new Encoder();
+    }
+
+    public void SendRequest(T Response)
+    {
+        string responseStr = JsonSerializer.Serialize(Response);
+        byte[] buffer = encoder.EncodeMessage(responseStr);
+        Console.OpenStandardOutput().Write(buffer, 0, buffer.Length);
+    }
+}
+
+
+public class Encoder
 {
     public byte[] EncodeMessage(string message)
     {
