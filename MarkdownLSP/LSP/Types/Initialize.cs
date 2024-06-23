@@ -2,13 +2,6 @@
 namespace LSP.Types;
 
 
-// Request
-
-public class InitializeRequest : Request
-{
-    public InitializeRequestParams? @params { get; set; }
-}
-
 public class InitializeRequestParams
 {
     public ClientInfo? clientInfo { get; set; }
@@ -22,10 +15,6 @@ public class ClientInfo
 
 // Response
 
-public class InitializeResponse : Response
-{
-    public InitializeResult? result { get; set; }
-}
 
 public class InitializeResult
 {
@@ -49,11 +38,11 @@ public class ServerCapabilities
 }
 
 
-class Parser
+class Generator
 {
-    static public InitializeResponse? ParseInitializeRequest(int id)
+    static public Response<InitializeResult>? ParseInitializeRequest(int id)
     {
-        InitializeResponse request = new InitializeResponse()
+        var request = new Response<InitializeResult>()
         {
             jsonrpc = "2.0",
             id = id,

@@ -1,8 +1,9 @@
 
 using System.Text;
 using System.Text.Json;
-using InitializeLSP;
 using Serilog;
+using LSP.Types;
+using LSP.Analysis;
 using TrieDictionary;
 
 
@@ -47,7 +48,6 @@ public class Program
         Encoder encoder = new Encoder();
         using (Stream stdin = Console.OpenStandardInput())
         {
-            Request? request;
             string requestStr = "";
             while (keepRunning)
             {
@@ -56,14 +56,9 @@ public class Program
                     requestStr = encoder.DecodeMessage(stdin);
                     if (!string.IsNullOrEmpty(requestStr))
                     {
-                        request = JsonSerializer.Deserialize<Request>(requestStr);
-                        if (request != null && request.method != null)
+                        if (!string.IsNullOrEmpty(requestStr))
                         {
-                            HandelRequest(request, encoder);
-                        }
-                        else
-                        {
-                            Log.Error($"Request Error: {request}");
+                            HandelRequest(encoder, requestStr);
                         }
                     }
                 }
@@ -75,24 +70,77 @@ public class Program
         }
     }
 
-    public static void HandelRequest(Request request, Encoder encoder)
+    public static void HandelRequest(Encoder encoder, string requestStr)
     {
+        // inital request
+        Request<InitializeRequestParams>? request = JsonSerializer.Deserialize<Request<InitializeRequestParams>>(requestStr);
+
+        // response parcer
+        Parcer parcer = new Parcer();
+
+        // document state
+        State state = new State();
+
+        if (request == null || request.method == null)
+        {
+            return;
+        }
+
+
         switch (request.method)
         {
             case "initialize":
                 int id = request.id ?? 0;
-                var response = Parser.ParseInitializeRequest(id);
-                string responseStr = JsonSerializer.Serialize(response);
-                byte[] buffer = encoder.EncodeMessage(responseStr);
-                Console.OpenStandardOutput().Write(buffer, 0, buffer.Length);
+                var response = Generator.ParseInitializeRequest(id);
+                if (response == null)
+                {
+                    throw new NullReferenceException("initial respons can't be null");
+                }
+                parcer.SendRequest(response);
 
                 Log.Debug("initialize request has been handled");
 
                 break;
             case "textDocument/didOpen":
+                Log.Debug(requestStr);
+                Notification<DidOpenTextDocumentParams> requestDidOpen;
+                try
+                {
+                    requestDidOpen = JsonSerializer.Deserialize<Notification<DidOpenTextDocumentParams>>(requestStr);
+                }
+                catch (ArgumentException e)
+                {
+                    Log.Error("json parse");
+                    Log.Error(e.Message);
+                    throw e;
+                }
 
 
-                Log.Debug("To be implemented Open");
+                if (requestDidOpen == null)
+                {
+                    throw new NullReferenceException(" Did Open request can't be null");
+                }
+
+                Log.Debug(requestDidOpen.@params.textDocument.URI);
+                Log.Debug(requestDidOpen.@params.textDocument.text);
+
+                var diagnostics = state.GetDiagnosticsForFile(requestDidOpen);
+
+                var notification = new Notification<PublishDiagnosticsParams>()
+                {
+                    jsonrpc = "2.0",
+                    method = "textDocument/publishDiagnostics",
+                    @params = new PublishDiagnosticsParams()
+                    {
+                        URI = requestDidOpen.@params.textDocument.URI,
+                        diagnostics = diagnostics,
+                    }
+                };
+
+                Log.Debug(notification.@params.diagnostics.ToString());
+                Log.Debug(notification.@params.URI);
+
+                parcer.SendRequest(notification);
 
                 break;
             case "textDocument/didChange":
@@ -112,7 +160,13 @@ public class Program
 
                 break;
             case "textDocument/hover":
-                Log.Debug("To be implemented hover");
+                var hoverRequest = JsonSerializer.Deserialize<Request<HoverParams>>(requestStr);
+                if (hoverRequest == null)
+                {
+                    throw new NullReferenceException("hover request can't be null");
+                }
+
+                Log.Debug(hoverRequest.ToString());
 
                 break;
 
@@ -128,16 +182,16 @@ public class Program
     }
 }
 
-public class Parcer : wq<T>
+public class Parcer
 {
     private Encoder encoder;
 
-    public Comunication()
+    public Parcer()
     {
         encoder = new Encoder();
     }
 
-    public void SendRequest(T Response)
+    public void SendRequest(object Response)
     {
         string responseStr = JsonSerializer.Serialize(Response);
         byte[] buffer = encoder.EncodeMessage(responseStr);
