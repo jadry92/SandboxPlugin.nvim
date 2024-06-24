@@ -1,13 +1,12 @@
 
 namespace LSP.Types;
 
-public class HoverParams
+public class HoverParams : TextDocumentPositionParams
 {
-    public TextDocumentPositionParams? TextDocumentPositionParams { get; set; }
 }
 
 public class HoverResult
 {
-    public string? Contents { get; set; }
+    public string? contents { get; set; }
 }
 

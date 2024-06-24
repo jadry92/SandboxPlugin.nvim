@@ -3,8 +3,8 @@ namespace LSP.Types;
 
 public class PublishDiagnosticsParams
 {
-    public string? URI { get; set; }
-    public Diagnostic[]? diagnostics { get; set; }
+    public string? uri { get; set; }
+    public List<Diagnostic>? diagnostics { get; set; }
 
 }
 

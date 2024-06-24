@@ -1,7 +1,6 @@
 
 namespace LSP.Types;
 
-
 public class InitializeRequestParams
 {
     public ClientInfo? clientInfo { get; set; }
@@ -54,7 +53,7 @@ class Generator
                     hoverProvider = true,
                     codeActionProvider = true,
                     definitionProvider = true,
-                    completionProvider = new Dictionary<string, object>() { }
+                    completionProvider = new Dictionary<string, object>() { },
                 },
                 serverInfo = new ServerInfo() { name = "MarkdowbnLSP", version = "1.0-MarkdownLSP" }
             }

@@ -9,7 +9,7 @@ public class TextDocumentPositionParams
 
 public class TextDocumentIdentifier
 {
-    public string? URI { get; set; }
+    public string? uri { get; set; }
 }
 
 public class VersionTextDocumentIdentifier
@@ -20,8 +20,8 @@ public class VersionTextDocumentIdentifier
 
 public class TextDocumentItem
 {
-    public string? URI { get; set; }
-    public string? languageID { get; set; }
+    public string? uri { get; set; }
+    public string? languageId { get; set; }
     public int? version { get; set; }
     public string? text { get; set; }
 }

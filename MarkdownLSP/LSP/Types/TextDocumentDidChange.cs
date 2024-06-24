@@ -5,7 +5,7 @@ namespace LSP.Types;
 class DidChangeTextDocumentParams
 {
     public VersionTextDocumentIdentifier? textDocument;
-    public TextDocumentContentChangeEvent[]? contentChange;
+    public List<TextDocumentContentChangeEvent>? contentChange;
 }
 
 class TextDocumentContentChangeEvent
