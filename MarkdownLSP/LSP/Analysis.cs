@@ -18,18 +18,9 @@ public class State
 
     public List<Diagnostic> GetDiagnosticsForFile(Notification<DidOpenTextDocumentParams> request)
     {
-        if (request.@params == null || request.@params.textDocument == null)
-        {
-            throw new NullReferenceException("params or text document can't be null");
-        }
 
-        string? uri = request.@params.textDocument.uri;
-        string? text = request.@params.textDocument.text;
-
-        if (uri == null || text == null)
-        {
-            throw new NullReferenceException("uri or text can't be null");
-        }
+        string uri = request.@params.textDocument.uri;
+        string text = request.@params.textDocument.text;
 
         List<Diagnostic> diagnostics = new List<Diagnostic>();
 
@@ -78,22 +69,12 @@ public class State
     public HoverResult Hover(Request<HoverParams> Request)
     {
         Position pos = Request.@params.position;
-        string? uri = Request.@params.textDocument.uri;
+        string uri = Request.@params.textDocument.uri;
 
-        if (pos == null || uri == null || pos.line == null)
-        {
-            throw new NullReferenceException("the hover request can't be null");
-        }
 
         int row = (int)pos.line;
 
-        string? line = this.Documents[uri][0];
-
-        if (line == null)
-        {
-            throw new NullReferenceException("Hover: Line not found");
-        }
-
+        string line = this.Documents[uri][row];
 
         var result = new HoverResult()
         {

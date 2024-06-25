@@ -2,9 +2,9 @@
 namespace LSP.Types;
 
 
-public class DidOpenTextDocumentParams
+public struct DidOpenTextDocumentParams
 {
-    public TextDocumentItem? textDocument { get; set; }
+    public TextDocumentItem textDocument { get; set; }
 }
 
 

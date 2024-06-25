@@ -57,10 +57,7 @@ public class Program
                     requestStr = encoder.DecodeMessage(stdin);
                     if (!string.IsNullOrEmpty(requestStr))
                     {
-                        if (!string.IsNullOrEmpty(requestStr))
-                        {
-                            HandelRequest(state, requestStr);
-                        }
+                        HandelRequest(state, requestStr);
                     }
                 }
                 catch (Exception e)
@@ -74,40 +71,27 @@ public class Program
     public static void HandelRequest(State state, string requestStr)
     {
         // inital request
-        Request<InitializeRequestParams>? request = JsonSerializer.Deserialize<Request<InitializeRequestParams>>(requestStr);
+        Request<InitializeRequestParams> request = JsonSerializer.Deserialize<Request<InitializeRequestParams>>(requestStr);
 
         // response parcer
         Parcer parcer = new Parcer();
 
-        if (request == null || request.method == null)
-        {
-            return;
-        }
         Log.Debug(request.method);
 
 
         switch (request.method)
         {
             case "initialize":
-                int id = request.id ?? 0;
-                var response = Generator.ParseInitializeRequest(id);
-                if (response == null)
-                {
-                    throw new NullReferenceException("initial respons can't be null");
-                }
+                var response = Generator.ParseInitializeRequest(request.id);
                 parcer.SendRequest(response);
 
                 Log.Debug("initialize request has been handled");
                 Log.Debug($"Params: {response.result.capabilities.hoverProvider}");
 
                 break;
+
             case "textDocument/didOpen":
                 var requestDidOpen = JsonSerializer.Deserialize<Notification<DidOpenTextDocumentParams>>(requestStr);
-
-                if (requestDidOpen == null)
-                {
-                    throw new NullReferenceException(" Request did open can't be null");
-                }
 
                 var diagnostics = state.GetDiagnosticsForFile(requestDidOpen);
 
@@ -144,10 +128,7 @@ public class Program
             case "textDocument/hover":
 
                 var hoverRequest = JsonSerializer.Deserialize<Request<HoverParams>>(requestStr);
-                if (hoverRequest == null)
-                {
-                    throw new NullReferenceException("hover request can't be null");
-                }
+
                 var result = state.Hover(hoverRequest);
                 var respond = new Response<HoverResult>()
                 {
@@ -235,13 +216,10 @@ public class Encoder
         }
         int contentLength = int.Parse(sizeContent.ToString());
 
-        // string[] arrayHeader = chunk.Split("\r\n\r\n");
-        // string header = arrayHeader[0];
-        // string contentFirstChunk = arrayHeader[1];
-        // int contentLength = int.Parse(header.Split("Content-Length: ")[1]) - contentFirstChunk.Length;
         byte[] contentBuffer = new byte[contentLength];
         stream.Read(contentBuffer, 0, contentLength);
         string content = Encoding.ASCII.GetString(contentBuffer);
+
         return content;
     }
 }

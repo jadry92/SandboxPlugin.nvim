@@ -1,52 +1,52 @@
 
 namespace LSP.Types;
 
-public class TextDocumentPositionParams
+public struct TextDocumentPositionParams
 {
-    public TextDocumentIdentifier? textDocument { get; set; }
-    public Position? position { get; set; }
+    public TextDocumentIdentifier textDocument { get; set; }
+    public Position position { get; set; }
 }
 
-public class TextDocumentIdentifier
+public struct TextDocumentIdentifier
 {
-    public string? uri { get; set; }
+    public string uri { get; set; }
 }
 
-public class VersionTextDocumentIdentifier
+public struct VersionTextDocumentIdentifier
 {
-    public int? version { get; set; }
+    public int version { get; set; }
 }
 
 
-public class TextDocumentItem
+public struct TextDocumentItem
 {
-    public string? uri { get; set; }
-    public string? languageId { get; set; }
-    public int? version { get; set; }
-    public string? text { get; set; }
+    public string uri { get; set; }
+    public string languageId { get; set; }
+    public int version { get; set; }
+    public string text { get; set; }
 }
 
-public class Position
+public struct Position
 {
-    public uint? line { get; set; }
-    public uint? character { get; set; }
+    public uint line { get; set; }
+    public uint character { get; set; }
 }
 
-public class LSPRange
+public struct LSPRange
 {
-    public Position? start { get; set; }
-    public Position? end { get; set; }
+    public Position start { get; set; }
+    public Position end { get; set; }
 }
 
-public class TextEdit
+public struct TextEdit
 {
-    public LSPRange? range { get; set; }
-    public string? newText { get; set; }
+    public LSPRange range { get; set; }
+    public string newText { get; set; }
 }
 
-public class WorkspaceEdite
+public struct WorkspaceEdite
 {
-    public Dictionary<string, TextEdit>? changes { get; set; }
+    public Dictionary<string, TextEdit> changes { get; set; }
 }
 
 

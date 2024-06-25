@@ -1,45 +1,45 @@
 
 namespace LSP.Types;
 
-public class InitializeRequestParams
+public struct InitializeRequestParams
 {
-    public ClientInfo? clientInfo { get; set; }
+    public ClientInfo clientInfo { get; set; }
 }
 
-public class ClientInfo
+public struct ClientInfo
 {
-    public string? name { get; set; }
-    public string? version { get; set; }
+    public string name { get; set; }
+    public string version { get; set; }
 }
 
 // Response
 
 
-public class InitializeResult
+public struct InitializeResult
 {
-    public ServerCapabilities? capabilities { get; set; }
-    public ServerInfo? serverInfo { get; set; }
+    public ServerCapabilities capabilities { get; set; }
+    public ServerInfo serverInfo { get; set; }
 }
 
-public class ServerInfo
+public struct ServerInfo
 {
-    public string? name { get; set; }
-    public string? version { get; set; }
+    public string name { get; set; }
+    public string version { get; set; }
 }
 
-public class ServerCapabilities
+public struct ServerCapabilities
 {
-    public int? textDocumentSync { get; set; }
-    public bool? hoverProvider { get; set; }
-    public bool? codeActionProvider { get; set; }
-    public bool? definitionProvider { get; set; }
-    public Dictionary<string, object>? completionProvider { get; set; }
+    public int textDocumentSync { get; set; }
+    public bool hoverProvider { get; set; }
+    public bool codeActionProvider { get; set; }
+    public bool definitionProvider { get; set; }
+    public Dictionary<string, object> completionProvider { get; set; }
 }
 
 
 class Generator
 {
-    static public Response<InitializeResult>? ParseInitializeRequest(int id)
+    static public Response<InitializeResult> ParseInitializeRequest(int id)
     {
         var request = new Response<InitializeResult>()
         {

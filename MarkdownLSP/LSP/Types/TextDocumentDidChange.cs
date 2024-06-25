@@ -2,13 +2,13 @@
 namespace LSP.Types;
 
 
-class DidChangeTextDocumentParams
+public struct DidChangeTextDocumentParams
 {
     public VersionTextDocumentIdentifier? textDocument;
     public List<TextDocumentContentChangeEvent>? contentChange;
 }
 
-class TextDocumentContentChangeEvent
+public struct TextDocumentContentChangeEvent
 {
     public LSPRange? range { get; set; }
     public uint? rangeLength { get; set; }
