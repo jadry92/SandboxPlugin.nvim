@@ -4,7 +4,6 @@ using System.Text.Json;
 using Serilog;
 using LSP.Types;
 using LSP.Analysis;
-using TrieDictionary;
 
 namespace Main;
 
@@ -35,29 +34,19 @@ public class Program
 
         Log.Debug("The program has started");
 
-        try
-        {
-            var literalDictionary = new LiteralDictionary();
-        }
-        catch (Exception e)
-        {
-            Log.Error(e.Message);
-        }
-
-        State state = new State();
-
-        Encoder encoder = new Encoder();
         using (Stream stdin = Console.OpenStandardInput())
         {
-            string requestStr = "";
+            State state = new State();
+            bool isThereAMessage = false;
+            Parcer parcer = new Parcer(stdin, state);
             while (keepRunning)
             {
                 try
                 {
-                    requestStr = encoder.DecodeMessage(stdin);
-                    if (!string.IsNullOrEmpty(requestStr))
+                    isThereAMessage = parcer.ReadRequest();
+                    if (isThereAMessage)
                     {
-                        HandelRequest(state, requestStr);
+                        parcer.HandelRequest();
                     }
                 }
                 catch (Exception e)
@@ -71,10 +60,41 @@ public class Program
     public static void HandelRequest(State state, string requestStr)
     {
         // inital request
-        Request<InitializeRequestParams> request = JsonSerializer.Deserialize<Request<InitializeRequestParams>>(requestStr);
+    }
+}
+
+public class Parcer
+{
+    private Encoder encoder;
+    private string messageReceived;
+    private Stream stream;
+    private State state;
+
+    public Parcer(Stream stream, State state)
+    {
+        this.encoder = new Encoder();
+        this.messageReceived = "";
+        this.stream = stream;
+        this.state = state;
+    }
+
+    public bool ReadRequest()
+    {
+        this.messageReceived = this.encoder.DecodeMessage(this.stream);
+        if (this.messageReceived.Equals(""))
+        {
+            return false;
+        }
+
+        return true;
+
+    }
+
+    public void HandelRequest()
+    {
+        var request = JsonSerializer.Deserialize<Request<InitializeRequestParams>>(this.messageReceived);
 
         // response parcer
-        Parcer parcer = new Parcer();
 
         Log.Debug(request.method);
 
@@ -83,17 +103,16 @@ public class Program
         {
             case "initialize":
                 var response = Generator.ParseInitializeRequest(request.id);
-                parcer.SendRequest(response);
+                this.SendRequest(response);
 
                 Log.Debug("initialize request has been handled");
-                Log.Debug($"Params: {response.result.capabilities.hoverProvider}");
 
                 break;
 
             case "textDocument/didOpen":
-                var requestDidOpen = JsonSerializer.Deserialize<Notification<DidOpenTextDocumentParams>>(requestStr);
+                var requestDidOpen = JsonSerializer.Deserialize<Notification<DidOpenTextDocumentParams>>(this.messageReceived);
 
-                var diagnostics = state.GetDiagnosticsForFile(requestDidOpen);
+                var diagnostics = this.state.GetDiagnosticsForFile(requestDidOpen);
 
                 var notification = new Notification<PublishDiagnosticsParams>()
                 {
@@ -106,7 +125,7 @@ public class Program
                     }
                 };
 
-                parcer.SendRequest(notification);
+                this.SendRequest(notification);
 
                 break;
             case "textDocument/didChange":
@@ -127,7 +146,7 @@ public class Program
                 break;
             case "textDocument/hover":
 
-                var hoverRequest = JsonSerializer.Deserialize<Request<HoverParams>>(requestStr);
+                var hoverRequest = JsonSerializer.Deserialize<Request<HoverParams>>(this.messageReceived);
 
                 var result = state.Hover(hoverRequest);
                 var respond = new Response<HoverResult>()
@@ -136,7 +155,8 @@ public class Program
                     id = request.id,
                     result = result,
                 };
-                parcer.SendRequest(respond);
+
+                this.SendRequest(respond);
 
                 break;
 
@@ -149,19 +169,12 @@ public class Program
             default:
                 break;
         }
-    }
-}
 
-public class Parcer
-{
-    private Encoder encoder;
-
-    public Parcer()
-    {
-        encoder = new Encoder();
+        this.messageReceived = "";
     }
 
-    public void SendRequest(object Response)
+
+    private void SendRequest(object Response)
     {
         string responseStr = JsonSerializer.Serialize(Response);
         Log.Debug("debug responde");
@@ -180,6 +193,7 @@ public class Encoder
         byte[] buffer = Encoding.ASCII.GetBytes(content);
         return buffer;
     }
+
     public string DecodeMessage(Stream stream)
     {
         // Get the header

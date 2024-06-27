@@ -1,18 +1,21 @@
 
 using LSP.Types;
 using Serilog;
-
-
+using System.Text;
+using TrieDictionary;
 
 namespace LSP.Analysis;
 
 public class State
 {
     private Dictionary<string, Dictionary<int, string>> Documents;
+    private LiteralDictionary LiteralDictionary;
+
 
     public State()
     {
         Documents = new Dictionary<string, Dictionary<int, string>>() { };
+        this.LiteralDictionary = new LiteralDictionary();
     }
 
 
@@ -24,42 +27,13 @@ public class State
 
         List<Diagnostic> diagnostics = new List<Diagnostic>();
 
-        const string VSCODE = "VS Code";
-        const string NVIM = "Neovim";
         int row = 0;
         var dicText = new Dictionary<int, string>();
         foreach (string line in text.Split('\n'))
         {
             dicText[row] = line;
-            if (line.Contains(VSCODE))
-            {
-
-                int idx = line.IndexOf(VSCODE);
-
-
-                diagnostics.Add(new Diagnostic()
-                {
-                    range = this.LineRange(row, idx, idx + VSCODE.Length),
-                    severity = 3,
-                    source = "Commm sensce",
-                    message = "use other stuff",
-                });
-
-
-            }
-            else if (line.Contains(NVIM))
-            {
-                int idx = line.IndexOf(NVIM);
-
-                diagnostics.Add(new Diagnostic()
-                {
-                    range = this.LineRange(row, idx, idx + NVIM.Length),
-                    severity = 3,
-                    source = "Commm sensce",
-                    message = "grate",
-                });
-            }
             row++;
+
         }
         this.Documents[uri] = dicText;
 
@@ -76,9 +50,27 @@ public class State
 
         string line = this.Documents[uri][row];
 
+        StringBuilder word = new StringBuilder();
+        for (int i = (int)pos.character; i < line.Length; i++)
+        {
+            char letter = line[i];
+            if (letter.Equals(" ") || letter.Equals("\n"))
+            {
+                break;
+            }
+            else
+            {
+                word.Append(letter);
+            }
+        }
+
+        Log.Debug(word.ToString());
+
+        string meaning = this.LiteralDictionary.getDefinition(word.ToString());
+
         var result = new HoverResult()
         {
-            contents = "Local Hover",
+            contents = meaning,
         };
 
         return result;
