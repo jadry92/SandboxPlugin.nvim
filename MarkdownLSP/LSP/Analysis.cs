@@ -6,15 +6,16 @@ using TrieDictionary;
 
 namespace LSP.Analysis;
 
+
 public class State
 {
-    private Dictionary<string, Dictionary<int, string>> Documents;
+    private Dictionary<string, List<Dictionary<int, string>>> Documents;
     private LiteralDictionary LiteralDictionary;
 
 
     public State()
     {
-        Documents = new Dictionary<string, Dictionary<int, string>>() { };
+        Documents = new Dictionary<string, List<Dictionary<int, string>>>() { };
         this.LiteralDictionary = new LiteralDictionary();
     }
 
@@ -26,16 +27,64 @@ public class State
         string text = request.@params.textDocument.text;
 
         List<Diagnostic> diagnostics = new List<Diagnostic>();
-
         int row = 0;
-        var dicText = new Dictionary<int, string>();
+
+        var listLines = new List<Dictionary<int, string>>();
         foreach (string line in text.Split('\n'))
         {
-            dicText[row] = line;
+            StringBuilder sb = new StringBuilder();
+            var dicText = new Dictionary<int, string>();
+            for (int i = 0; i < line.Length; i++)
+            {
+                char letter = line[i];
+                if (letter.Equals(" "))
+                {
+                    string word = sb.ToString();
+                    Log.Debug(word);
+                    int idx = word.Length - i;
+                    dicText[idx] = word;
+                    sb.Clear();
+                    string meaning = this.LiteralDictionary.getDefinition(word);
+                    if (meaning != null)
+                    {
+                        var dig = new Diagnostic()
+                        {
+                            range = this.LineRange(row, idx, idx + word.Length),
+                            severity = 3,
+                            source = "Dictionary",
+                            message = meaning,
+                        };
+                        diagnostics.Add(dig);
+                    }
+                }
+                else if (i == line.Length - 1)
+                {
+                    sb.Append(letter);
+                    string word = sb.ToString();
+                    Log.Debug(word);
+                    int idx = word.Length - i;
+                    dicText[idx] = word;
+                    sb.Clear();
+                    string meaning = this.LiteralDictionary.getDefinition(word);
+                    var dig = new Diagnostic()
+                    {
+                        range = this.LineRange(row, idx, idx + word.Length),
+                        severity = 3,
+                        source = "Dictionary",
+                        message = meaning,
+                    };
+                    diagnostics.Add(dig);
+                }
+                else
+                {
+                    sb.Append(letter);
+                }
+            }
+            listLines.Add(dicText);
             row++;
-
         }
-        this.Documents[uri] = dicText;
+
+        this.Documents[uri] = listLines;
 
         return diagnostics;
     }
@@ -46,27 +95,25 @@ public class State
         string uri = Request.@params.textDocument.uri;
 
 
-        int row = (int)pos.line;
+        int line = (int)pos.line;
+        int character = (int)pos.character;
 
-        string line = this.Documents[uri][row];
+        Log.Debug(line.ToString());
+        Dictionary<int, string> wordsDic = this.Documents[uri][line];
 
-        StringBuilder word = new StringBuilder();
-        for (int i = (int)pos.character; i < line.Length; i++)
+        var keys = wordsDic.Keys;
+
+        string meaning = "";
+        foreach (int key in keys)
         {
-            char letter = line[i];
-            if (letter.Equals(" ") || letter.Equals("\n"))
+            Log.Debug(key.ToString());
+            string word = wordsDic[key];
+            Log.Debug(word);
+            if (key <= character && key >= word.Length)
             {
-                break;
-            }
-            else
-            {
-                word.Append(letter);
+                meaning = this.LiteralDictionary.getDefinition(word.ToLower());
             }
         }
-
-        Log.Debug(word.ToString());
-
-        string meaning = this.LiteralDictionary.getDefinition(word.ToString());
 
         var result = new HoverResult()
         {
