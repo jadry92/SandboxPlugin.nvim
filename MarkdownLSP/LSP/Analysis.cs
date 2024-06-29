@@ -9,84 +9,56 @@ namespace LSP.Analysis;
 
 public class State
 {
-    private Dictionary<string, List<Dictionary<int, string>>> Documents;
+    private Dictionary<string, List<string>> Documents;
     private LiteralDictionary LiteralDictionary;
 
 
     public State()
     {
-        Documents = new Dictionary<string, List<Dictionary<int, string>>>() { };
+        Documents = new Dictionary<string, List<string>>() { };
         this.LiteralDictionary = new LiteralDictionary();
     }
 
 
-    public List<Diagnostic> GetDiagnosticsForFile(Notification<DidOpenTextDocumentParams> request)
+    public List<Diagnostic> GetDiagnosticsForFile(Notification<DidOpenTextDocumentParams> notification)
     {
 
-        string uri = request.@params.textDocument.uri;
-        string text = request.@params.textDocument.text;
+        string uri = notification.@params.textDocument.uri;
+        string text = notification.@params.textDocument.text;
+
 
         List<Diagnostic> diagnostics = new List<Diagnostic>();
-        int row = 0;
 
-        var listLines = new List<Dictionary<int, string>>();
+        var listLines = new List<string>();
         foreach (string line in text.Split('\n'))
         {
-            StringBuilder sb = new StringBuilder();
-            var dicText = new Dictionary<int, string>();
-            for (int i = 0; i < line.Length; i++)
-            {
-                char letter = line[i];
-                if (letter.Equals(" "))
-                {
-                    string word = sb.ToString();
-                    Log.Debug(word);
-                    int idx = word.Length - i;
-                    dicText[idx] = word;
-                    sb.Clear();
-                    string meaning = this.LiteralDictionary.getDefinition(word);
-                    if (meaning != null)
-                    {
-                        var dig = new Diagnostic()
-                        {
-                            range = this.LineRange(row, idx, idx + word.Length),
-                            severity = 3,
-                            source = "Dictionary",
-                            message = meaning,
-                        };
-                        diagnostics.Add(dig);
-                    }
-                }
-                else if (i == line.Length - 1)
-                {
-                    sb.Append(letter);
-                    string word = sb.ToString();
-                    Log.Debug(word);
-                    int idx = word.Length - i;
-                    dicText[idx] = word;
-                    sb.Clear();
-                    string meaning = this.LiteralDictionary.getDefinition(word);
-                    var dig = new Diagnostic()
-                    {
-                        range = this.LineRange(row, idx, idx + word.Length),
-                        severity = 3,
-                        source = "Dictionary",
-                        message = meaning,
-                    };
-                    diagnostics.Add(dig);
-                }
-                else
-                {
-                    sb.Append(letter);
-                }
-            }
-            listLines.Add(dicText);
-            row++;
+            listLines.Add(line);
         }
 
         this.Documents[uri] = listLines;
 
         return diagnostics;
+    }
+
+
+    public void OnChange(Notification<DidChangeTextDocumentParams> notification)
+    {
+
+        string uri = notification.@params.textDocument.uri;
+
+
+        foreach (var changes in notification.@params.contentChanges)
+        {
+            string text = changes.text;
+
+            var listLines = new List<string>();
+            foreach (string line in text.Split('\n'))
+            {
+                listLines.Add(line);
+            }
+
+            this.Documents[uri] = listLines;
+        }
     }
 
     public HoverResult Hover(Request<HoverParams> Request)
@@ -98,21 +70,14 @@ public class State
         int line = (int)pos.line;
         int character = (int)pos.character;
 
-        Log.Debug(line.ToString());
-        Dictionary<int, string> wordsDic = this.Documents[uri][line];
+        string textLine = this.Documents[uri][line];
 
-        var keys = wordsDic.Keys;
+        string word = this.GetWordAtIndex(textLine, character);
 
         string meaning = "";
-        foreach (int key in keys)
+        if (!string.IsNullOrEmpty(word))
         {
-            Log.Debug(key.ToString());
-            string word = wordsDic[key];
-            Log.Debug(word);
-            if (key <= character && key >= word.Length)
-            {
-                meaning = this.LiteralDictionary.getDefinition(word.ToLower());
-            }
+            meaning = this.LiteralDictionary.getDefinition(word);
         }
 
         var result = new HoverResult()
@@ -124,6 +89,27 @@ public class State
 
     }
 
+    private string GetWordAtIndex(string text, int index)
+    {
+        if (index < 0 || index >= text.Length || char.IsWhiteSpace(text[index]))
+        {
+            return "";
+        }
+
+        int start = index;
+        while (start > 0 && !char.IsWhiteSpace(text[start - 1]))
+        {
+            start--;
+        }
+
+        int end = index;
+        while (end < text.Length && !char.IsWhiteSpace(text[end]))
+        {
+            end++;
+        }
+
+        return text.Substring(start, end - start);
+    }
 
     private LSPRange LineRange(int line, int start, int end)
     {

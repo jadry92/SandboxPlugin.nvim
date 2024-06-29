@@ -14,7 +14,8 @@ public struct TextDocumentIdentifier
 
 public struct VersionTextDocumentIdentifier
 {
-    public int version { get; set; }
+    public string uri { get; set; }
+    public uint version { get; set; }
 }
 
 

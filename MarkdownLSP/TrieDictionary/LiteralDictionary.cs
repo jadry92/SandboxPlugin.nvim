@@ -58,7 +58,7 @@ public class LiteralDictionary
         }
         else
         {
-            return "No Definition";
+            return "";
         }
     }
 

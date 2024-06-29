@@ -129,7 +129,9 @@ public class Parcer
 
                 break;
             case "textDocument/didChange":
-                Log.Debug("To be implemented Change");
+                var notificationDidChange = JsonSerializer.Deserialize<Notification<DidChangeTextDocumentParams>>(this.messageReceived);
+
+                this.state.OnChange(notificationDidChange);
 
                 break;
             case "textDocument/completion":
